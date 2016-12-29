@@ -60,7 +60,12 @@
         <version>3.1.2</version>
         <scope>test</scope>
     </dependency>
-
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>brave</artifactId>
+      <version>${project.version}</version>
+      <optional>true</optional>
+    </dependency>
     <!-- for testing SpanId -->
     <dependency>
       <groupId>com.twitter</groupId>
