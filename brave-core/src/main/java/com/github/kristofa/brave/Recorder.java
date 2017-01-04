@@ -40,7 +40,7 @@ abstract class Recorder {
   abstract void finish(Span span, SpanKind kind);
 
   /** Implicitly calls flush */
-  abstract void finish(Span span, long duration);
+  abstract void finish(Span span, long timestamp);
 
   /** Reports whatever is present even if unfinished. */
   abstract void flush(Span span);
@@ -134,14 +134,7 @@ abstract class Recorder {
     }
 
     @Override void finish(Span span) {
-      long endTimestamp = clock().currentTimeMicroseconds();
-      synchronized (span) {
-        Long startTimestamp = span.getTimestamp();
-        if (startTimestamp != null) {
-          span.setDuration(Math.max(1L, endTimestamp - startTimestamp));
-        }
-      }
-      flush(span);
+      finish(span, clock().currentTimeMicroseconds());
     }
 
     @Override void finish(Span span, SpanKind kind) {
@@ -157,21 +150,16 @@ abstract class Recorder {
           throw new AssertionError(kind + " is not yet supported");
       }
       long endTimestamp = clock().currentTimeMicroseconds();
-      Annotation annotation = Annotation.create(endTimestamp, value, localEndpoint());
-
-      synchronized (span) {
-        span.addToAnnotations(annotation);
-        Long startTimestamp = span.getTimestamp();
-        if (startTimestamp != null) {
-          span.setDuration(Math.max(1L, endTimestamp - startTimestamp));
-        }
-      }
-      flush(span);
+      annotate(span, endTimestamp, value);
+      finish(span, endTimestamp);
     }
 
-    @Override void finish(Span span, long duration) {
+    @Override void finish(Span span, long timestamp) {
       synchronized (span) {
-        span.setDuration(duration);
+        Long startTimestamp = span.getTimestamp();
+        if (startTimestamp != null) {
+          span.setDuration(Math.max(1L, timestamp - startTimestamp));
+        }
       }
       flush(span);
     }
